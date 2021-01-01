@@ -209,24 +209,6 @@ class Graph(object):
         diameter = len(smallest_paths[-1]) - 1
         return diameter
 
-    @staticmethod
-    def erdoes_gallai(dsequence):
-        """ Checks if the condition of the Erdoes-Gallai inequality 
-            is fullfilled 
-        """
-        if sum(dsequence) % 2:
-            # sum of sequence is odd
-            return False
-        if Graph.is_degree_sequence(dsequence):
-            for k in range(1,len(dsequence) + 1):
-                left = sum(dsequence[:k])
-                right =  k * (k-1) + sum([min(x,k) for x in dsequence[k:]])
-                if left > right:
-                    return False
-        else:
-            # sequence is increasing
-            return False
-        return True
 
 #sample use
 from graphs import Graph
@@ -266,17 +248,6 @@ print(graph.edges())
 print("Degree Sequence: ")
 ds = graph.degree_sequence()
 print(ds)
-
-fullfilling = [ [2, 2, 2, 2, 1, 1], 
-                     [3, 3, 3, 3, 3, 3],
-                     [3, 3, 2, 1, 1]
-                   ] 
-non_fullfilling = [ [4, 3, 2, 2, 2, 1, 1],
-                    [6, 6, 5, 4, 4, 2, 1],
-                    [3, 3, 3, 1] ]
-
-for sequence in fullfilling + non_fullfilling :
-    print(sequence, Graph.erdoes_gallai(sequence))
 
 print("Add vertex 'z':")
 graph.add_vertex("z")
