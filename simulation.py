@@ -273,3 +273,96 @@ class Epidemics:
         self.accum_days += delta_day
 
         return self.accum_days
+
+def main():
+
+    for ens in range(1, num_ens+1):
+        rnd.seed()
+
+        # Output file1 setting (Cr-Effectiveness phase diagram)
+        filename1 = f"output_episode{ens}.csv"
+        f1 = open(filename1, 'w')
+        header1 = ['Cr', 'Effectiveness', 'FES', 'SAP', 'VC']
+        writer1 = csv.writer(f1)
+        writer1.writerow(header1)
+
+        society = Society(num_agent, average_degree)
+        agents = society.generate_agents()
+        init_vaccinators_id = Decision.choose_initial_vaccinators(num_agent)
+
+        for Cr in np.arange(0, 1.1, 0.1):
+            for effectiveness in np.arange(0, 1.1, 0.1):
+
+                # Output file2 setting (Time evolution of each Cr-effectivenss pair)
+                filename2 = f"time_evolution_Cr{Cr:.1f}_effectiveness{effectiveness:.1f}.csv"
+                f2 = open(filename2, 'w')
+                header2 = ["Season", "Day", "Fs", "Fi","Fr", "Fv"]
+                writer2 = csv.writer(f2)
+                writer2.writerow(header2)
+
+                ############################## Initialization ################################
+
+                epidemics = Epidemics(effectiveness)
+                decision = Decision(Cr)
+                agents = decision.init_strategy(agents, init_vaccinators_id)        # Initial vaccination
+                Fs, Fi, Fr, Fv = society.count_fraction(agents)                     # Check initial state when varying Cr
+                VC = [Fv]                                                           # Set initial Fv
+                print(f"Before starting season..., Cr:{Cr:.1f}, Effectivenss:{effectiveness:.1f}, Fs:{Fs:.3f}, Fi:{Fi:.3f}, Fr:{Fr:.3f}, Fv:{Fv:.3f}")
+                print('---------------------- Start initial season ----------------------')
+
+                ############################## End initialization ############################
+
+                ############################### Start season loop ############################
+
+                for season in range(1, num_season+1):
+                    epidemics.reset_day()
+                    agents = epidemics.init_state(agents)
+
+                    # Check whether each fraction is intialized before starting SIR days
+                    Fs, Fi, Fr, Fv = society.count_fraction(agents)
+                    print(f"Cr:{Cr:.1f}, Effectiveness:{effectiveness:.1f}, Season:{season}, Day:{epidemics.accum_days}, Fs:{Fs:.4f}, Fi:{Fi:.4f}, Fr:{Fr:.4f}, Fv:{Fv:.4f}")
+                    writer2.writerow([season, 0, format(Fs, '.3f'), format(Fi, '.3f'), format(Fr, '.3f'), format(Fv, '.3f')])
+
+                    ############################## Start day loop ############################
+
+                    while True:
+                        agents = epidemics.state_change(agents)  # SIR dynamics
+                        day = epidemics.count_day()
+                        Fs, Fi, Fr, Fv = society.count_fraction(agents)
+                        print(f"Cr:{Cr:.1f}, Effectiveness:{effectiveness:.1f}, Season:{season}, Day:{day:.2f}, Fs:{Fs:.4f}, Fi:{Fi:.4f}, Fr:{Fr:.4f}, Fv:{Fv:.4f}")
+                        writer2.writerow([season, format(day,'.2f'), format(Fs, '.3f'), format(Fi, '.3f'), format(Fr, '.3f'), format(Fv, '.3f')])
+
+                        if society.count_num_I(agents) == 0:
+                            break
+
+                    ############################## End day loop ##############################
+
+                    agents = decision.update_strategy(agents)   # Strategy update
+                    Fs, Fi, Fr, Fv = society.count_fraction(agents)
+                    VC.append(Fv)
+                    print('---------------------------------- Vaccination !! ------------------------------------')
+
+                    num_NV = len([agent for agent in agents if agent.strategy == NV])
+                    if num_NV < epidemics.num_initI:
+                        print("Number of non-vaccinators less than initial infected people, can't choose initial I agents")
+                        break
+
+                    if VC[season] == 0:
+                        break
+
+                    if season >= 100 and np.absolute(np.mean(VC[season-100:season-1]) - VC[season-1])/VC[season] <= 0.001:
+                        break
+
+                ############################### End season loop #############################
+
+                # Get the solution at equilibrium and write the result to csv
+                Fs, Fi, FES, FVC = society.count_fraction(agents)
+                SAP = society.count_SAP(agents)
+                print('-------------------------------  Result of final season -------------------------------')
+                print(f"Cr:{Cr:.1f}, Effectiveness:{effectiveness:.1f}, Season:{season}, FES:{FES:.3f}, SAP:{SAP:.3f}, VC:{FVC:.3f}")
+                print('---------------------------------------------------------------------------------------')
+                writer1.writerow([format(Cr, '.1f'), format(effectiveness,'.1f'), format(FES, '.3f'), format(SAP, '.3f'), format(FVC, '.3f')])
+                f2.close()
+    f1.close()
+if __name__ == "__main__":
+    main()
