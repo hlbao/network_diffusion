@@ -158,7 +158,8 @@ class Epidemics:
         self.effectiveness = effectiveness     # Effectiveness of Vaccination
         self.total_transition_probability = 0  # Sum of the transition probability over all agents
         self.accum_days = 0                    # Accumulative day calculated by Gillespie algorithm(count_day method)
-
+    """https://en.wikipedia.org/wiki/Gillespie_algorithm"""
+    
     def reset_day(self):
         """Initialize accum_day at the beginning of each season"""
 
@@ -190,6 +191,13 @@ class Epidemics:
         """Set transition probabilities for all agents and take the sum of them"""
 
         self.total_transition_probability = 0
+        
+        #self.beta = 2                          # Infection probability
+        #self.mu = 0.33                         # Recovery probability
+        #self.num_initI = 5                     # Number of initially infected people
+        #self.effectiveness = effectiveness     # Effectiveness of Vaccination
+        #self.total_transition_probability = 0  # Sum of the transition probability over all agents
+        #self.accum_days = 0                    # Accumulative day calculated by Gillespie algorithm(count_day method)
 
         for focal in agents:
             if focal.state == S:
