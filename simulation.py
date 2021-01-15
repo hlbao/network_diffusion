@@ -116,7 +116,9 @@ class Decision:
                 focal.point = -self.Cr
 
             if focal.strategy == V and focal.state == R:
-                focal.point = -self.Cr-1.0
+                #focal.point = -self.Cr-1.0
+                focal.point = -self.Cr-2.0
+
 
             if focal.strategy == NV and focal.state == S:
                 focal.point = 0.0
